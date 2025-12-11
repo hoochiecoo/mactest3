@@ -1,0 +1,47 @@
+name: iOS Build & Upload
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-upload:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Project
+        run: xcodegen generate
+
+      # 1. Запуск тестов
+      - name: Run Tests
+        run: |
+          xcodebuild test \
+            -project MiniIOSApp.xcodeproj \
+            -scheme MiniIOSApp \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'
+
+      # 2. Сборка приложения для Симулятора (без подписи)
+      # CONFIGURATION_BUILD_DIR=build указывает, куда положить результат
+      - name: Build for Simulator
+        run: |
+          xcodebuild build \
+            -project MiniIOSApp.xcodeproj \
+            -scheme MiniIOSApp \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            CONFIGURATION_BUILD_DIR=build \
+            CODE_SIGNING_ALLOWED=NO
+
+      # 3. Сохранение файла .app как Артефакта GitHub
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MiniIOSApp-Simulator-Build
+          path: build/MiniIOSApp.app
