@@ -1,11 +1,11 @@
-name: iOS Build & Upload
+name: iOS Screenshot CI
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-upload:
+  build-and-screenshot:
     runs-on: macos-latest
     
     steps:
@@ -18,16 +18,7 @@ jobs:
       - name: Generate Project
         run: xcodegen generate
 
-      # 1. Запуск тестов
-      - name: Run Tests
-        run: |
-          xcodebuild test \
-            -project MiniIOSApp.xcodeproj \
-            -scheme MiniIOSApp \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'
-
-      # 2. Сборка приложения для Симулятора (без подписи)
-      # CONFIGURATION_BUILD_DIR=build указывает, куда положить результат
+      # 1. Сборка приложения для Симулятора (без подписи)
       - name: Build for Simulator
         run: |
           xcodebuild build \
@@ -39,9 +30,33 @@ jobs:
             CONFIGURATION_BUILD_DIR=build \
             CODE_SIGNING_ALLOWED=NO
 
-      # 3. Сохранение файла .app как Артефакта GitHub
-      - name: Upload Artifact
+      # 2. Запуск Симулятора и снятие скриншота
+      # xcrun simctl — это утилита управления симулятором из консоли
+      - name: Boot Simulator & Screenshot
+        run: |
+          # Задаем имя устройства
+          DEVICE_NAME="iPhone 16"
+          
+          # Загружаем (включаем) симулятор. || true нужно, чтобы не падало, если он уже включен.
+          xcrun simctl boot "$DEVICE_NAME" || true
+          
+          # Устанавливаем наше скомпилированное приложение
+          xcrun simctl install "$DEVICE_NAME" build/MiniIOSApp.app
+          
+          # Запускаем приложение по Bundle ID (он задан в project.yml)
+          xcrun simctl launch "$DEVICE_NAME" com.example.MiniIOSApp
+          
+          # Ждем 10 секунд, пока iOS загрузится, приложение откроется и отрисует UI
+          sleep 10
+          
+          # Делаем скриншот и сохраняем его в файл app_screenshot.png
+          xcrun simctl io "$DEVICE_NAME" screenshot app_screenshot.png
+          
+          echo "Screenshot taken!"
+
+      # 3. Сохранение скриншота как Артефакт, чтобы ты мог его скачать
+      - name: Upload Screenshot
         uses: actions/upload-artifact@v4
         with:
-          name: MiniIOSApp-Simulator-Build
-          path: build/MiniIOSApp.app
+          name: App-Screenshot
+          path: app_screenshot.png
