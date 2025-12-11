@@ -47,7 +47,7 @@ jobs:
           xcrun simctl launch "$DEVICE_NAME" com.example.MiniIOSApp
           
           # Ждем 10 секунд, пока iOS загрузится, приложение откроется и отрисует UI
-          sleep 10
+          sleep 20
           
           # Делаем скриншот и сохраняем его в файл app_screenshot.png
           xcrun simctl io "$DEVICE_NAME" screenshot app_screenshot.png
