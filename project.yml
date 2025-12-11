@@ -1,0 +1,28 @@
+name: MiniIOSApp
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: 16.0
+targets:
+  MiniIOSApp:
+    type: application
+    platform: iOS
+    sources: [MiniIOSApp]
+    settings:
+      base:
+        INFOPLIST_FILE: MiniIOSApp/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.MiniIOSApp
+        # Важно: отключаем требование подписи кода, чтобы собрать без сертификата (для Симулятора)
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGNING_ALLOWED: "NO"
+  
+  MiniIOSAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [MiniIOSAppTests]
+    dependencies:
+      - target: MiniIOSApp
+    settings:
+      base:
+        INFOPLIST_FILE: MiniIOSAppTests/Info.plist
